@@ -1,0 +1,88 @@
+#include<iostream>
+#include<stdlib.h>
+using namespace std;
+class Date{
+public:
+	Date(int y,int m,int d){
+		year=y;
+		month=m;
+		day=d;
+	}
+	void print(int f);
+	int date(int y,int m,int d,int f);
+private:
+	int year;
+	int month;
+	int day;
+};
+void Date::print(int f){
+	int n,flg;
+	flg=f;
+	n=date(year,month,day,flg);
+	cout<<year<<"."<<month<<"."<<day<<"是本年的第"<<n<<"天"<<endl;
+		
+}
+int Date::date(int y,int m,int d,int f){
+	int ryear[12]={31,29,31,30,31,30,31,31,30,31,30,31};
+	int nyear[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+	int sum,i,flg;
+	flg=f;
+	sum=day;
+	if(flg==1){
+		for(i=0;i<(month-1);i++){
+			sum+=ryear[i];
+		}
+	}
+	else{
+		for(i=0;i<(month-1);i++){
+			sum+=nyear[i];
+		}
+	}
+	return sum;
+}
+int main(){
+	char h,g;
+	int ryear[12]={31,29,31,30,31,30,31,31,30,31,30,31};
+	int nyear[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+	int y,m,d,flg;
+	do{
+		cout<<"请输入年月日：";
+		cin>>y>>m>>d;
+		if((y%4==0 && y%100!=0) || y%400==0)flg=1;
+		else flg=0;
+		while(y<=0 || y>3000){
+			cout<<"年份输入错误！请重新输入年份：";
+			cin>>y;
+		}
+		while(m<=0 || m>12){
+			cout<<"月份输入错误！请重新输入月份：";
+			cin>>m;
+		}
+		if(flg==1){
+			while(d<=0 || d>ryear[m-1]){
+				cout<<"天数输入错误！请重新输入天数：";
+				cin>>d;
+			}
+		}
+		if(flg==0){
+			while(d<=0 || d>nyear[m-1]){
+				cout<<"天数输入错误！请重新输入天数：";
+				cin>>d;
+			}
+		}
+	Date ob(y,m,d);
+	Date*p;
+	p=&ob;
+	p->print(flg);
+	cout<<"是否继续？（y/n）"<<endl;
+		getchar();
+		cin>>h;
+		if(h=='n')goto A;
+		cout<<"是否清屏？（y/n）"<<endl;
+		getchar();
+		cin>>g;
+		if(g=='y')system("CLS");
+	}while(h=='y');
+	A:cout<<"再见！！！"<<endl;
+	return 0;
+}
