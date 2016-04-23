@@ -1,0 +1,366 @@
+#include<iostream>
+#include<cmath>
+using namespace std;
+/***************Point类功能：***********************/
+class Point{
+private:
+	int X;
+	int Y;
+public:
+	Point(int x1,int y1){
+		X=x1;
+		Y=y1;
+	}
+	void move(int a,int b){
+		X=X+a;
+		Y=Y+b;
+	}
+	void show(){
+		cout<<"移动后点的坐标为："<<"("<<X<<","<<Y<<")"<<endl;
+	}
+	double di;
+	double distant(){
+		di=X*X+Y*Y;
+		return sqrt(di);
+	}
+};
+/***************Line类功能：*********************/
+class Line{
+private:
+	int x,y,k,b;
+	int x1,y1,x2,y2;
+	int k1,k2;
+	int b1,b2;
+	public:
+	void Line3(int ka,int ba,int kb,int bb){
+		k1=ka;b1=ba;
+		k2=kb;b2=bb;
+	}
+	void Line2(int xa,int ya,int xb,int yb){
+		x1=xa;y1=ya;
+		x2=xb;y2=yb;
+	}
+	void Line1(int x1,int y1,int k1,int b1){
+		x=x1;y=y1;
+		k=k1;b=b1;
+	}
+	void distant(){
+		double di;
+		di=(k*x-y+b)/sqrt(k*k+1);
+		cout<<"点("<<x<<","<<y<<")直线y="<<k<<"x+"<<b<<"的距离为："<<di<<endl;
+	}
+
+	void Slope(){//斜率
+		double sl;
+		if(x1==x2)cout<<"斜率不存在！"<<endl;
+		else sl=(y2-y1)/(x2-x1);cout<<"斜率为："<<sl<<endl;
+	}
+	void friangle();
+};
+void Line::friangle(){
+	double a,b;
+	if(k1==k2){
+			cout<<"两条线平行！";
+				if(b1==b2)cout<<"且重合！"<<endl;
+		}
+		else{
+			cout<<"两条线相交！";
+			if(k1==(-1/k2))cout<<"且垂直！"<<endl;
+			a=(b1-b2)/(k2-k1);
+			b=((k2*b1)-(k1*b2))/(k2-k1);
+			cout<<"焦点为："<<"("<<a<<","<<b<<")"<<endl;
+		}
+}
+/*****************Friangle类功能：************************/
+class Friangle{
+private:
+	int poinx1,poiny1;
+	int poinx2,poiny2;
+	int poinx3,poiny3;
+	double slope(int px1,int py1,int px2,int py2);
+	double length(int px1,int py1,int px2,int py2);
+public:
+	Friangle(int x1,int y1,int x2,int y2,int x3,int y3){
+		poinx1=x1;poiny1=y1;
+		poinx2=x2;poiny2=y2;
+		poinx3=x3;poiny3=y3;
+	}
+	void triangle();
+};
+double Friangle::slope(int px1,int py1,int px2,int py2){
+	double k;
+	if(px2==px1)cout<<"斜率不存在！"<<endl;
+	else{
+		k=(py2-py1)/(px2-px1);
+		return k;
+	}
+	return 10000000;
+}
+double Friangle::length(int px1,int py1,int px2,int py2){
+	double len;
+	len=((px2-px1)*(px2-px1))+((py2-py1)*(py2-py1));
+	return sqrt(len);
+}
+void Friangle::triangle(){
+	int flg=0,a=0,b=0,c=0;
+	double k1,k2,k3;
+	double L1,L2,L3;
+	if(poinx1==poinx2){
+		cout<<"k1的";
+		a=1;
+	}
+	k1=slope(poinx1,poiny1,poinx2,poiny2);
+	if(poinx1==poinx3){
+		cout<<"k2的";
+		b=1;
+	}
+	k2=slope(poinx1,poiny1,poinx3,poiny3);
+	if(poinx2==poinx3){
+		cout<<"k3的";
+		c=1;
+	}
+	k3=slope(poinx2,poiny2,poinx3,poiny3);
+	if(a+b+c>1){								//有两条以上线斜率不存在时
+		cout<<"不能构成三角形！"<<endl;
+		exit(0);
+	}
+	if(a+b+c==1 && (k1==0 || k2==0 || k3==0))flg=1;
+	if(k1==k2 || k1==k3 || k2==k3){
+		cout<<"不能构成三角形！"<<endl;
+		exit(0);
+	}
+	if(k1==(-1/k2) || k1==(-1/k3) || k2==(-1/k3))flg=1;
+	L1=length(poinx1,poiny1,poinx2,poiny2);cout<<"L1="<<L1<<endl;
+	L2=length(poinx1,poiny1,poinx3,poiny3);cout<<"L2="<<L2<<endl;
+	L3=length(poinx2,poiny2,poinx3,poiny3);cout<<"L3="<<L3<<endl;
+	cout<<"该三角形是:";
+	if(L1==L2 || L1==L3 || L2==L3){
+		if(flg==1)cout<<"直角";
+		if(L1==L2 && L1==L3 && L2==L3)cout<<"等边三角形"<<endl;
+		else cout<<"等腰三角形"<<endl;
+	}
+	else cout<<"普通三角形！"<<endl;
+	double l,s;
+	l=(L1+L2+L3)/2;
+	s=l*(L1-1)*(L2-l)*(L3-l);
+	cout<<"该三角形面积是:"<<s<<endl;
+}
+/***************PolyAngle类功能：*********************/
+class PolyAngle{
+private:
+	double poinx1,poiny1;
+	double poinx2,poiny2;
+	double poinx3,poiny3;
+	double poinx4,poiny4;
+	double Slope(double px1,double py1,double px2,double py2);
+	double Length(double px1,double py1,double px2,double py2);
+public:
+	PolyAngle(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4){
+		poinx1=x1;poiny1=y1;
+		poinx2=x2;poiny2=y2;
+		poinx3=x3;poiny3=y3;
+		poinx4=x4;poiny4=y4;
+	}
+	void judgememt();
+};
+double PolyAngle::Slope(double px1,double py1,double px2,double py2){
+	double k;
+	if(px2==px1)cout<<"斜率不存在！"<<endl;
+	else{
+		k=(py2-py1)/(px2-px1);
+		return k;
+	}
+	return 10000000;
+}
+double PolyAngle::Length(double px1,double py1,double px2,double py2){
+	double len;
+	len=((px2-px1)*(px2-px1))+((py2-py1)*(py2-py1));
+	return sqrt(len);
+}
+void PolyAngle::judgememt(){
+	int flg=0,a=0,b=0,c=0,d=0,e=0,f=0;
+	double k1,k2,k3,k4,sk1,sk2;
+	double L1,L2,L3,L4,sL1,sL2;
+	double sum,s1,s2,l;
+	if(poinx1==poinx2){
+		cout<<"k1的";
+		a=1;
+	}
+	k1=Slope(poinx1,poiny1,poinx2,poiny2);cout<<"k1="<<k1<<",";
+	L1=Length(poinx1,poiny1,poinx2,poiny2);cout<<"L1="<<L1<<endl;
+	if(poinx2==poinx3){
+		cout<<"k2的";
+		b=1;
+	}
+	k2=Slope(poinx2,poiny2,poinx3,poiny3);cout<<"k2="<<k2<<",";
+	L2=Length(poinx2,poiny2,poinx3,poiny3);cout<<"L2="<<L2<<endl;
+	if(poinx3==poinx4){
+		cout<<"k3的";
+		c=1;
+	}
+	k3=Slope(poinx3,poiny3,poinx4,poiny4);cout<<"k3="<<k3<<",";
+	L3=Length(poinx3,poiny3,poinx4,poiny4);cout<<"L3="<<L3<<endl;
+	if(poinx1==poinx4){
+		cout<<"k4的";
+		d=1;
+	}
+	k4=Slope(poinx1,poiny1,poinx4,poiny4);cout<<"k4="<<k4<<",";
+	L4=Length(poinx1,poiny1,poinx4,poiny4);cout<<"L4="<<L4<<endl;
+	if(poinx1==poinx3){
+		cout<<"对角线s1的";
+		e=1;
+	}
+	sk1=Slope(poinx1,poiny1,poinx3,poiny3);
+	sL1=Length(poinx1,poiny1,poinx3,poiny3);cout<<"对角线s1="<<sL1<<endl;
+	if(poinx2==poinx4){
+		cout<<"对角线s2的";
+		f=1;
+	}
+	sk2=Slope(poinx2,poiny2,poinx4,poiny4);
+	sL2=Length(poinx2,poiny2,poinx4,poiny4);cout<<"对角线s2="<<sL2<<endl;
+	if(a+b+c+d>2){				//有两条以上线斜率不存在时
+		cout<<"不能构成四边形！"<<endl;
+		exit(0);
+	}
+	if(k1==k2 || k2==k3 || k3==k4 ||k4==k1){		
+		cout<<"不能构成四边形！"<<endl;
+		exit(0);
+	}
+	if((k1==k3 && L1==L3)){
+		cout<<"四边形是平行四边形！"<<endl;
+		l=(L1+L2+sL1)/2;
+		s1=sqrt(l*(l-L1)*(l-L2)*(l-sL1));
+		l=(L3+L4+sL1)/2;
+		s2=sqrt(l*(l-L3)*(l-L4)*(l-sL1));
+		sum=s1+s2;
+		if(sL1==sL2){
+			cout<<"且是矩形！"<<endl;
+			sum=L1*L2;
+		}
+		if(L1==L2){
+			cout<<"且是菱形！"<<endl;
+			sum=sL1*sL2/2;
+			if(sL1==sL2){
+				cout<<"且是正方形！"<<endl;
+				sum=sL1*sL2/2;
+			}
+		}
+
+	}
+	else {
+		cout<<"为普通四边形！"<<endl;
+		if((k1==k3 && L1!=L3 && sL1==sL2)||(k2==k4 && L2!=L4 && sL1==sL2))cout<<"且是等腰梯形！"<<endl;
+		l=(L1+L2+sL1)/2;
+		s1=sqrt(l*(l-L1)*(l-L2)*(l-sL1));
+		l=(L3+L4+sL1)/2;
+		s2=sqrt(l*(l-L3)*(l-L4)*(l-sL1));
+		sum=s1+s2;
+	}
+	double z;
+	z=L1+L2+L3+L4;
+	cout<<"四边形周长为："<<z<<endl;
+	cout<<"四边形面积为："<<sum<<endl;
+}
+/**************************************************************/
+void main(){
+	int i;
+	D:cout<<"1.Point类功能："<<endl<<"2.Line类功能："<<endl<<"3.Friangle类功能："<<endl<<"4.PolyAngle类功能："<<endl;
+	C:cin>>i;
+	switch(i){
+		case 1:{
+			int x,y;
+			int a,b;
+			cout<<"请输入一个点的初始坐标：";
+			cin>>x>>y;
+			Point p(x,y);
+			cout<<"请输入初始点沿着x轴，y轴移动的距离：";
+			cin>>a>>b;
+			p.move(a,b);
+			p.show();
+			cout<<"这个点到原点的距离为："<<p.distant()<<endl;
+			break;
+			   }//case 1
+		case 2:{
+				char m;
+				int h;
+				int x1,y1,x2,y2;
+				int k1,k2,b1,b2;
+				int K,B;
+				B:cout<<"请按提示操作："<<endl<<"1.计算点到直线的距离；"<<endl<<"2.直线的斜率;"<<endl<<"3.判断两条直线的关系(平行/相交（交点坐标能够给出来并显示）"<<endl<<"4.退出"<<endl;
+				A:cin>>h;
+			    switch(h){
+				case 1:{
+					Line L1;
+					cout<<"请输入一个点的坐标：";
+					cin>>x1>>y1;
+					cout<<"请输入一条直线的斜率，截距：";
+					cin>>K>>B;
+					L1.Line1(x1,y1,K,B);
+					L1.distant();
+					break;
+			   }
+				case 2:{
+					Line L2;
+					cout<<"请输入一个点的坐标：";
+					cin>>x1>>y1;
+					cout<<"请输入二个点的坐标：";
+					cin>>x2>>y2;
+					L2.Line2(x1,y1,x2,y2);
+					L2.Slope();
+					break;
+		   }
+			case 3:{
+					Line L3;
+					cout<<"请输入第一条直线的斜率，截距：";
+					cin>>k1>>b1;
+					cout<<"请输入第二条直线的斜率，截距：";
+					cin>>k2>>b2;
+					L3.Line3(k1,b1,k2,b2);
+					L3.friangle();
+					break;
+		   }
+			case 4:break;
+				default:{cout<<"输入错误！，请从新输入：";goto A;}
+				}
+				cout<<"是否继续？(y/n)"<<endl;
+				cin>>m;
+				getchar();//接受回车
+				if(m=='y')goto B;
+				break;
+			   }//case 2:
+		case 3:{
+			   int x1,y1,x2,y2,x3,y3;
+				cout<<"请输入第1个点的坐标：";
+				cin>>x1>>y1;
+				cout<<"请输入第2个点的坐标：";
+				cin>>x2>>y2;
+				cout<<"请输入第3个点的坐标：";
+				cin>>x3>>y3;
+				Friangle f(x1,y1,x2,y2,x3,y3);
+				f.triangle();
+			   }//case 3:
+		case 4:{
+			int x1,y1,x2,y2,x3,y3,x4,y4;
+			cout<<"请输入第一个点的坐标：";
+			cin>>x1>>y1;
+			cout<<"请输入第二个点的坐标：";
+			cin>>x2>>y2;
+			cout<<"请输入第三个点的坐标：";
+			cin>>x3>>y3;
+			cout<<"请输入第四个点的坐标：";
+			cin>>x4>>y4;
+			PolyAngle p(x1,y1,x2,y2,x3,y3,x4,y4);
+			p.judgememt();
+			   }//case 4:
+			default:{cout<<"输入错误！，请从新输入：";goto C;}
+	}//switch
+	char w;
+	cout<<"是否返回主菜单？（y/n）";
+	cin>>w;
+	getchar();
+	if(w=='y'){
+		system("cls");
+		goto D;
+	}
+	else cout<<"再见！！！"<<endl;
+}//main
