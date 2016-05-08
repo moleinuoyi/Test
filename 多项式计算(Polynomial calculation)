@@ -1,0 +1,199 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define TRUE 1
+#define FALSE 0
+#define OK 1
+#define ERROR 1
+#define OVERFLOW -2
+
+typedef int Status;
+typedef int SElemType;
+
+#define STACK_INIT_SIZE 10
+#define STACK_INCREMENT 2
+
+typedef struct{
+	SElemType *top;
+	SElemType *base;
+	int stacksize;
+}SqStack;
+
+Status InitStack(SqStack &S){
+	S.base=(SElemType*)malloc(STACK_INIT_SIZE*sizeof(SElemType));
+	if(!S.base){
+		printf("error！栈初始化失败！\n");
+		exit(OVERFLOW);
+	}
+	S.top=S.base;
+	S.stacksize=STACK_INIT_SIZE;
+	return 0;
+}
+
+void DestoryStack(SqStack &S){
+	free(S.base);
+	S.top=S.base=NULL;
+	S.stacksize=0;
+}
+void ClearStack(SqStack &S){
+	S.top=S.base;
+}
+Status StackEmpty(SqStack S){
+	if(S.top==S.base)return OK;
+	return ERROR;
+}
+
+
+Status GetStack(SqStack S,SElemType &e){
+	if(S.top==S.base){
+		printf("error!GetStack栈空！\n");
+		exit(OVERFLOW);
+	}
+	e=*(S.top-1);
+	return OK;
+}
+Status Pop(SqStack &S,SElemType &e){
+	if(S.top==S.base){
+		printf("error!Pop栈空！\n");
+		exit(OVERFLOW);
+	}
+	e=*(S.top-1);
+	S.top--;
+	return OK;
+}
+
+
+Status Push(SqStack &S,SElemType e){
+	if(S.top-S.base==S.stacksize){       //栈满
+		S.base=(SElemType*)realloc(S.base,(S.stacksize+STACK_INCREMENT)*sizeof(SElemType));
+		if(!S.base){
+			printf("error！栈满，申请空间失败！\n");
+			exit(OVERFLOW);
+		}
+		S.top=S.base+S.stacksize;
+		S.stacksize+=STACK_INCREMENT;
+	}
+	*(S.top)=e;
+	S.top++;
+}
+void Stakcraverse(SqStack S,void(*visit)(SElemType &)){
+	while(S.top>S.base) 
+    visit(*S.base++); 
+    printf("\n"); 
+}
+
+/***************************************************/
+
+char Precede(char t1,char t2){
+	int f;
+	switch(t1){
+	case '+':
+	case '-':if(t2=='*' || t2=='/' || t2=='(') f='<';//优先级t1<t2
+			 else f='>';//优先级t1>t2
+			 break;
+	case '*':
+	case '/':if(t2=='(')f='<';
+			 else f='>';
+			 break;
+	case '(':if(t2==')')f='=';
+			 else if(t2=='#')f='!';// 缺乏右括号
+			 else f='<';
+			 break;
+	case ')':if(t2=='(')f='!';  //括号不匹配
+			 else f='>';
+			 break;
+	case '#':if(t2=='#')f='='; //t1=t2
+			 else if(t2==')')f='!'; // 缺乏左括号
+			  else f='<';//t1<t2
+              break;
+	}
+	return f;
+}
+
+SElemType Operate(SElemType a,SElemType theta,SElemType b){
+	switch(theta){ 
+	case'+':return a+b;
+    case'-':return a-b;
+    case'*':return a*b;
+   }
+   return a/b;
+}
+
+Status EvaluateExpression(char *exp,SElemType &result){
+	SqStack Optr,Opnd;//Optr和Opnd分别为运算符栈和运算数栈
+	InitStack(Optr);
+	InitStack(Opnd);
+	int i=0;
+	SElemType a,b,d,x;
+	char c;
+	Push(Optr,'#');
+	c=exp[i++]; // 读入exp的1个字符到c
+	GetStack(Optr,x);
+	while(c!='#' || x!='#'){
+		if(c=='+' || c=='-' || c=='*' || c=='/' || c=='(' || c==')' || c=='#'){
+			switch(Precede(x,c)){//Precede比较运算符优先级
+			case '<':Push(Optr,c);
+				c=exp[i++];
+				break;
+			case '=':Pop(Optr,x);
+				c=exp[i++];
+				break;
+			case '>':Pop(Optr,x);
+				if(!Pop(Opnd,a)){
+					printf("表达式不正确1\n");  //例如:++24
+				    return ERROR;
+				}
+				if(!Pop(Opnd,b)){
+					printf("表达式不正确2\n");//例如:+1+2,1+++
+				    return ERROR;
+				}
+				Push(Opnd,Operate(a,x,b));
+				break;
+			default:
+				printf("表达式不正确3(括号不匹配)\n");//例如:（1+1或1+2）
+				return ERROR;
+			}//switch
+		
+		}//if
+		else if(c>='0'&&c<='9'){
+			d=0;
+			while(c>='0'&&c<='9'){
+				d=d*10+c-'0';
+			c=exp[i++];
+			}
+			Push(Opnd,d);
+		}
+		else if(c=='\0')c='#';
+		else{
+			printf("表达式不正确4(出现非法字符:%c)\n",c);
+			return ERROR;
+        }
+		GetStack(Optr,x);
+	}//while
+	if(!Pop(Opnd,result)){
+		printf("表达式不正确5(运算数栈OPND为空)\n");    //例如:表达式为：#
+		return ERROR;
+	}
+	if(!StackEmpty(Opnd)){ 
+		printf("表达式不正确6\n"); //例如：（12+13）24
+     return ERROR;
+   }
+   return OK;
+}//函数
+
+void main(){  
+	 char a;
+	 char str[100];
+	 SElemType result;
+	 A:printf("请输入表达式，负数要用(0-正数)表示：\n");
+	 scanf("%s",str);
+	 if(EvaluateExpression(str,result))printf("表达式值=%d\n",result);
+	 printf("是否继续？（y/n）:");
+	 getchar();//接受回车
+	 B:scanf("%c",&a);
+	 if(a=='y')goto A;
+	 else if(a=='n')return;
+	 else {
+		 printf("输入错误！请从新输入：");
+		 goto B;
+	 }
+ }
