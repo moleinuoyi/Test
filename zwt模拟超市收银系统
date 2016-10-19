@@ -1,0 +1,1021 @@
+/*
+题目三：模拟超市收银系统
+由收银员输入顾客的会员卡卡号（若有卡）、所购商品的货号等。从数据库（或文件）中取出有关价格信息，再把这些信息返回给收银台。
+同时把该收银台的销售总量和有关种类商品的剩余量以及该持卡顾客的消费情况交数据库（或文件）存储以供查询。
+另外，对没有卡的消费情况不记录该顾客的消费情况等个人信息。如果一个未持卡顾客一次性购物满200元，可为其发放一张会员卡，
+以后在该商场购物可获得9折优惠。
+*/
+#include <stdlib.h>
+#include<fstream>
+#include<string>
+#include<conio.h>
+#include<iostream>
+using namespace std;
+
+//开始画面
+class Starshow{
+public:
+	void show(){
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t   欢迎使用超市收银系统   \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t     是否查看指令（Y/N）  \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+	}
+	void close(){
+		system("cls");
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t   感谢您的使用，谢谢！   \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+	}
+	void list(){
+		system("cls");
+		cout<<endl<<endl<<"\t\t**\t\t          主菜单        \t\t\t**"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      1.顾客系统          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      2.员工系统          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      3.退出系统          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;                  
+	}
+};
+
+//判断对错
+class Wrond{//判断对错
+public:
+	int judge(char g){
+		system("cls");
+		if(g=='y'||g=='Y')
+			return 1;
+		else if(g=='n'||g=='N'){
+			return 0;
+		}
+		else {
+			system("cls");
+			cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+			cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+			cout<<"\t\t*\t\t   输入错误，请从新输入:  \t\t\t*"<<endl;
+			cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+			cout<<"\t\t*****************************************************************"<<endl;
+			return -1;
+		}
+	}
+};
+
+ //货品类
+class Commodity{    //货品类
+protected:
+	int mn;
+	int commodityID[100];				//货品ID
+	string commodityname[100];			//货品姓名
+	int stock[100];						//货品存量
+	double price[100];					//货品价格
+public:
+	void Commodityfile(){						//构造函数
+		mn=0;
+		ifstream fin("Commodity.txt",ios::in);
+		if(!fin){
+			cout<<"error!文件打开错误！";
+			exit(-1);
+		}
+		while(!fin.eof()){
+			fin>>commodityID[mn]>>commodityname[mn]>>price[mn]>>stock[mn];
+			mn++;
+		}
+		fin.close();
+	}
+
+	void Commodityinformation(){		//货品信息输出
+		Commodityfile();
+		cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+		cout<<"\t\t    ========================================================"<<endl;
+		int n=0;
+		while(n<mn){
+			cout<<"\t\t\t"<<commodityID[n]<<"\t"<<commodityname[n]<<"\t\t"<<price[n]<<"\t\t"<<stock[n]<<endl;
+			n++;
+		}
+		return;
+	}
+	int Commodityquiry(int commoditynumber){			//货品查询
+		Commodityfile();
+		int n=0;
+		for(n=0;n<mn;n++){
+			if(commodityID[n]==commoditynumber)
+				return n+1;
+		}
+		//cout<<"未查询到该货品！请确认是否输入正确！"<<endl;
+		return 0;
+	}
+	int Commodityquiryname(string commoditynumber){			//货品查询
+		Commodityfile();
+		int n=0;
+		for(n=0;n<mn;n++){
+			if(commodityname[n]==commoditynumber)
+				return n+1;
+		}
+		//cout<<"未查询到该货品！请确认是否输入正确！"<<endl;
+		return 0;
+	}
+	int Commoditywrite(){				
+		int i=0;
+		ofstream fout("Commodity.txt",ios::out);
+		if(!fout){
+			cout<<"error!未找到文件！";
+			exit(-1);
+		}
+		while(i<mn){
+			if(i<mn-1)
+				fout<<commodityID[i]<<" "<<commodityname[i]<<" "<<price[i]<<" "<<stock[i]<<endl;
+			else
+				fout<<commodityID[i]<<" "<<commodityname[i]<<" "<<price[i]<<" "<<stock[i];
+			i++;
+		}
+		return 1;
+	}
+};
+
+//普通会员
+class VIP_common{		//普通会员
+protected:
+	int m;
+	int id[100];				//卡号
+	string name[100];			//姓名
+	string sex[100];			//性别
+	int phonenumber[100];		//手机号码
+	double balance[100];		//余额
+public:
+	void VIP_commonfile(){
+		m=0;
+		ifstream fin("VIPcommon.txt",ios::in);
+		if(!fin){
+			cout<<"error!文件打开错误！";
+			exit(-1);
+		}
+		while(!fin.eof()){
+			fin>>id[m]>>name[m]>>sex[m]>>phonenumber[m]>>balance[m];
+			m++;
+		}
+		fin.close();
+	}
+	void VIPinformation(){					//会员信息
+		VIP_commonfile();
+		cout<<"\t\t\t卡号\t姓名\t性别\t电话\t余额"<<endl;
+		cout<<"\t\t    ==============================================="<<endl;
+		int n=0;
+		while(n<m){
+			cout<<"\t\t\t"<<id[n]<<"\t"<<name[n]<<"\t"<<sex[n]<<"\t"<<phonenumber[n]<<"\t"<<balance[n]<<endl;
+			n++;
+		}
+		return;
+	}
+	int VIPinquiry(int cardnumber){		//VIP查询
+		int n=0;
+		for(n=0;n<m;n++){
+			if(id[n]==cardnumber){
+				cout<<"查询成功！"<<endl;
+				cout<<"\t\t\t卡号\t姓名\t性别\t电话\t余额"<<endl;
+				cout<<"\t\t    ==============================================="<<endl;
+				cout<<"\t\t\t"<<id[n]<<"\t"<<name[n]<<"\t"<<sex[n]<<"\t"<<phonenumber[n]<<"\t"<<balance[n]<<endl;
+				return n+1;
+			}
+		}
+		cout<<"未查询到！请确认是否输入正确并从新输入：";
+		return 0;
+	}
+
+
+	int VIPwrite(int f,double mone){//文件的写入
+		int i=0;
+		ofstream fout("VIPcommon.txt",ios::out);
+		if(!fout){
+			cout<<"error!未找到文件！";
+			exit(-1);
+		}
+		balance[f]+=mone;
+		while(i<m){
+			if(i<m-1)
+				fout<<id[i]<<" "<<name[i]<<" "<<sex[i]<<" "<<phonenumber[i]<<" "<<balance[i]<<endl;
+			else
+				fout<<id[i]<<" "<<name[i]<<" "<<sex[i]<<" "<<phonenumber[i]<<" "<<balance[i];
+			i++;
+		}
+		return 1;
+	}
+};
+
+//顾客类
+class Customer:public VIP_common,public Commodity{					//顾客类
+private:
+	Wrond W;				//类的组合
+public:	
+	Customer(){				//构造函数
+		VIP_commonfile();
+	}
+	void show(){
+		system("cls");
+		cout<<"请按提示操作：";
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      1.会员充值          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      2.顾客买单          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      3.会员注册          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      4.退出界面          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;            
+	}
+	void pays();			//付款
+	void VIPrecharge();		//vip充值
+	void addVIP();			//vip注册
+	void consumeRecord(int id,string name,double price,int num,int flg);
+	void consumeRecord1(string name,int card,int flg);
+	void consumeRecord2(double money,double shouqian,double shishou,double zhaoling);
+	void choose(){
+		char in;
+		do{
+			cin>>in;
+			switch(in){
+			case '1':
+				VIPrecharge();
+				break;
+			case '2':
+				pays();
+				break;
+			case '3':
+				addVIP();
+				break;
+			case '4':
+				break;
+			default:
+				cout<<"输入错误！请从新输入：";	
+				break;
+			}
+		}while(in>'3' && in<'4');
+	}
+};
+//消费记录
+void Customer::consumeRecord1(string name,int card,int flg){
+	ofstream fout("Record.txt",ios::app);
+	if(!fout){
+			cout<<"error!未找到文件！";
+			exit(-1);
+		}
+	if(flg==1)
+		fout<<endl<<endl<<"姓名："<<name<<"\t"<<"卡号："<<card<<endl;
+	else
+		fout<<endl<<endl<<"普通顾客"<<endl;
+	fout<<"编号"<<"\t"<<"名称"<<"\t"<<"单价"<<"\t"<<"数量"<<"\t"<<"折扣"<<"\t"<<"小计"<<endl;
+	fout<<"======================================================"<<endl;
+	fout.close();
+}
+void Customer::consumeRecord(int id,string name,double price,int num,int flg){
+	ofstream fout("Record.txt",ios::app);
+	if(!fout){
+			cout<<"error!未找到文件！";
+			exit(-1);
+		}
+	if(flg==1)
+		fout<<id<<"\t"<<name<<"\t"<<price<<"\t"<<num<<"\t"<<(0.05*num*price)<<"\t"<<(price*num)-(0.05*num*price)<<endl;
+	else
+		fout<<id<<"\t"<<name<<"\t"<<price<<"\t"<<num<<"\t"<<"0"<<"\t"<<(price*num)<<endl;
+	fout.close();
+}
+void Customer::consumeRecord2(double money,double shouqian,double shishou,double zhaoling){
+	ofstream fout("Record.txt",ios::app);
+	if(!fout){
+			cout<<"error!未找到文件！";
+			exit(-1);
+		}
+	fout<<"======================================================"<<endl;
+	fout<<"总金额："<<money<<"  "<<"应收："<<shouqian<<"实收："<<shishou<<"  "<<"找零："<<zhaoling<<endl;
+
+	fout.close();
+}
+
+//注册会员方法
+void Customer::addVIP(){
+	char g;
+	int id,num;
+	char name[20],sex[20];
+	char man[20]="男",girl[20]="女";
+	double pri;
+	cout<<"请输入新增会员名称：";
+	cin>>name;
+	cout<<"请输入新增会员性别：";
+	do{
+		cin>>sex;
+		if(!strcmp(sex,man)==0 && !strcmp(sex,girl)==0)
+			cout<<"性别输入错误！请重新输入（男/女）：";
+	}while(!strcmp(sex,man)==0 && !strcmp(sex,girl)==0);
+	cout<<"请输入新增会员电话：";
+	cin>>num;
+	cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t        是否是充值？      \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*****************************************************************"<<endl;  
+	do{
+		cin>>g;
+		getchar();
+		if(W.judge(g)==1){
+			cout<<"请输入充值金额：";
+			do{
+				cin>>pri;
+				if(pri<0)
+					cout<<"充值金额输入错误！请重新输入：";
+			}while(pri<0);
+		}
+		else if(W.judge(g)==0)
+			pri=0;
+	}while(W.judge(g)<0);
+
+	ofstream of("VIPcommon.txt",ios::app);
+	of<<"\n"<<10001+VIP_common::m<<" "<<name<<" "<<sex<<" "<<num<<" "<<pri;		//id要改成10000+m；
+	of.close();
+	system("cls");
+	cout<<"注册成功！"<<endl;
+	VIPinformation();
+	system("pause");
+}
+//客户支付方法
+void Customer::pays(){
+	system("cls");
+	int cardword;
+	int goodsnum[100]={0},number[100]={0};//商品编号和数量
+	char g;//用于输入y/n
+	int n=0,y=0;
+	cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t      是否是会员？        \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t        （y/n）           \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*****************************************************************"<<endl;
+CING:cin>>g;
+		if(W.judge(g)==1){				//输入的是y
+			int f;
+			cout<<"请输入会员卡号：";  //记得查找打印会员数据   有会员卡中的金额
+			do{
+				cin>>cardword;
+				f=VIPinquiry(cardword);
+			}while(f==0);
+			system("cls");
+			Commodityinformation();
+			VIPinquiry(cardword);
+			consumeRecord1(name[f-1],id[f-1],1);			//记录消费信息
+			int flg=1,tlg=1;
+			for(n=0;1;n++){//死循环
+				flg=1;
+				cout<<"请输入产品编号：";
+				do{
+					flg=1;
+					cin>>goodsnum[n];
+					if(goodsnum[n]==-1){
+						tlg=0;
+						break;
+					}
+					if(Commodityquiry(goodsnum[n])==0){
+						cout<<"仓库中未查有此产品，请核实是否输入错误，并重新输入：";
+						flg=0;
+					}
+				}while(flg==0);
+				if(tlg==0)break;
+				cout<<"请输入产品数量：";
+				do{
+					flg=1;
+					cin>>number[n];
+					if(stock[Commodityquiry(goodsnum[n])-1]==0){
+						cout<<"库存为0，请核实！"<<endl;
+						n--;
+						flg=-1;
+						break;
+					}
+					if(number[n]>stock[Commodityquiry(goodsnum[n])-1]){
+						cout<<"产品存货不足，请核实是否输入错误，并重新输入：";
+						flg=0;
+					}
+					if(number[n]<0){
+						cout<<"产品数量输入错误！请重新输入：";
+						flg=0;
+					}
+				}while(flg==0);
+				if(flg>=0)
+					stock[Commodityquiry(goodsnum[n])-1]=stock[Commodityquiry(goodsnum[n])-1]-number[n];
+				cout<<endl;
+				Commoditywrite();
+			}
+			system("cls");
+			y=0;
+			cout<<"\t\t产品编号\t产品名称\t产品数量\t产品价格\t折扣价格"<<endl;
+			cout<<"\t\t====================================================================="<<endl;
+			double sum=0,discount=0;//总价和折扣
+			while(y<n){
+				cout<<"\t\t"<<commodityID[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<commodityname[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<number[y]<<"\t\t"<<price[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<(price[Commodityquiry(goodsnum[y])-1]*0.05*number[y])<<endl;
+				sum+=price[Commodityquiry(goodsnum[y])-1]*number[y];//计算总价
+				consumeRecord(commodityID[Commodityquiry(goodsnum[y])-1],commodityname[Commodityquiry(goodsnum[y])-1],price[Commodityquiry(goodsnum[y])-1],number[y],0);
+				y++;
+			}
+			discount=sum*0.05;
+			cout<<"\t\t====================================================================="<<endl;
+			cout<<"\t\t姓名："<<name[f-1]<<"\t电话："<<phonenumber[f-1]<<"\t总金额："<<sum<<"\t折扣价格："<<discount<<endl<<endl;
+			cout<<"\t\t\t\t================================"<<endl;
+			cout<<"\t\t\t\t||        应收"<<(sum-discount)<<"元        ||"<<endl;
+			cout<<"\t\t\t\t================================"<<endl<<endl;
+			char in;
+			cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+			cout<<"\t\t*\t\t         结账方式         \t\t\t*"<<endl;
+			cout<<"\t\t*\t\t    1.现金    2.会员卡    \t\t\t*"<<endl;
+			cout<<"\t\t*****************************************************************"<<endl;
+
+CININ:		cin>>in;
+			switch(in){
+			case '1':
+				double money1;
+				cout<<"\t\t\t    =================================="<<endl;
+				cout<<"\t\t\t    ||        请输入现金金额：        ||"<<endl;
+				cout<<"\t\t\t    =================================="<<endl<<endl;
+				do{
+					cin>>money1;
+					if(money1<0 || money1<(sum-discount)){
+							cout<<"输入错误！请重新输入：";
+						}
+				}while(money1<0 || money1<(sum-discount));
+				system("cls");
+				cout<<"\t\t\t\t================================"<<endl;
+				cout<<"\t\t\t\t||     应收： "<<(sum-discount)<<"元\t  ||"<<endl;
+				cout<<"\t\t\t\t||     实收："<<money1<<"元\t||"<<endl;
+				cout<<"\t\t\t\t||     元找零："<<money1-(sum-discount)<<"元\t||"<<endl;
+				cout<<"\t\t\t\t================================"<<endl<<endl;
+				consumeRecord2(sum,(sum-discount),money1,money1-(sum-discount));
+				break;
+			case '2':
+				if(balance[f-1]<(sum-discount)){
+					cout<<"会员卡中的金额不足！共剩"<<balance[f-1]<<"元"<<endl<<endl;
+					cout<<"\t\t\t\t================================"<<endl;
+					cout<<"\t\t\t\t||    请补交现金"<<(sum-discount-balance[f-1])<<"元     ||"<<endl;
+					cout<<"\t\t\t\t================================"<<endl<<endl;
+					double money;
+					cout<<"\t\t\t    =================================="<<endl;
+					cout<<"\t\t\t    ||        请输入现金金额：        ||"<<endl;
+					cout<<"\t\t\t    =================================="<<endl<<endl;
+					do{
+						cin>>money;
+						if(money<0 || money<(sum-discount-balance[f-1])){
+							cout<<"输入错误！请重新输入：";
+						}
+					}while(money<0 || money<(sum-discount-balance[f-1]));
+					system("cls");
+					cout<<"\t\t\t\t================================"<<endl;
+					cout<<"\t\t\t\t||     应收： "<<(sum-discount-balance[f-1])<<"元  \t||"<<endl;
+					cout<<"\t\t\t\t||     实收："<<money<<"\t\t元||"<<endl;
+					cout<<"\t\t\t\t||     元找零："<<money-(sum-discount-balance[f-1])<<"元\t\t||"<<endl;
+					cout<<"\t\t\t\t================================"<<endl<<endl;
+					balance[f-1]=0;
+					VIPwrite(f-1,0);
+				}
+				else{
+					balance[f-1]-=(sum-discount);
+					VIPwrite(f-1,0);
+				}
+				cout<<"\t\t\t卡号\t姓名\t性别\t电话\t余额"<<endl;
+				cout<<"\t\t    ==============================================="<<endl;
+				cout<<"\t\t\t"<<id[f-1]<<"\t"<<name[f-1]<<"\t"<<sex[f-1]<<"\t"<<phonenumber[f-1]<<"\t"<<balance[f-1]<<endl;
+				break;
+			default:
+				cout<<"输入错误请重新输入：";
+				goto CININ;
+			}
+			system("pause");
+			
+		}
+		else if(W.judge(g)==0){//不是会员时
+			int flg=1,tlg=1;
+			consumeRecord1(name[0],id[0],0);	
+			Commodityinformation();
+			for(n=0;1;n++){//死循环
+				flg=1;
+				cout<<"请输入产品编号：";
+				do{
+					flg=1;
+					cin>>goodsnum[n];
+					if(goodsnum[n]==-1){
+						tlg=0;
+						break;
+					}
+					if(Commodityquiry(goodsnum[n])==0){
+						cout<<"仓库中未查有此产品，请核实是否输入错误，并重新输入：";
+						flg=0;
+					}
+				}while(flg==0);
+				if(tlg==0)break;
+				cout<<"请输入产品数量：";
+				do{
+					flg=1;
+					cin>>number[n];
+					if(stock[Commodityquiry(goodsnum[n])-1]==0){
+						cout<<"库存为0，请核实！";
+						n--;
+						flg=-1;
+						break;
+					}
+					if(number[n]>stock[Commodityquiry(goodsnum[n])-1]){
+						cout<<"产品存货不足，请核实是否输入错误，并重新输入：";
+						flg=0;
+					}
+					if(number[n]<0){
+						cout<<"产品数量输入错误！请重新输入：";
+						flg=0;
+					}
+				}while(flg==0);
+				if(flg>=0)
+					stock[Commodityquiry(goodsnum[n])-1]=stock[Commodityquiry(goodsnum[n])-1]-number[n];
+				cout<<endl;
+				Commoditywrite();
+			}
+			system("cls");
+			cout<<"\t\t产品编号\t产品名称\t产品数量\t产品价格\t折扣价格"<<endl;
+			cout<<"\t\t====================================================================="<<endl;
+			double sum=0,discount=0;//总价和折扣
+			for(y=0;y<n;y++){
+				cout<<"\t\t"<<commodityID[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<commodityname[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<number[y]<<"\t\t"<<price[Commodityquiry(goodsnum[y])-1]<<"\t\t"<<"0"<<endl;
+				sum+=price[Commodityquiry(goodsnum[y])-1]*number[y];
+				consumeRecord(commodityID[Commodityquiry(goodsnum[y])-1],commodityname[Commodityquiry(goodsnum[y])-1],price[Commodityquiry(goodsnum[y])-1],number[y],0);
+			}
+			cout<<"\t\t====================================================================="<<endl;
+			cout<<"\t\t\t总金额："<<sum<<"\t折扣价格："<<"0"<<endl<<endl;
+			cout<<"\t\t\t\t================================"<<endl;
+			cout<<"\t\t\t\t||         应收"<<sum<<"元          ||"<<endl;
+			cout<<"\t\t\t\t================================"<<endl<<endl;
+			double money2;
+			cout<<"\t\t\t    =================================="<<endl;
+			cout<<"\t\t\t    ||        请输入现金金额：        ||"<<endl;
+			cout<<"\t\t\t    =================================="<<endl<<endl;
+			do{
+				cin>>money2;
+				if(money2<0 || money2<sum){
+					cout<<"输入错误！请重新输入：";
+				}
+			}while(money2<0 || money2<sum);
+			system("cls");
+			cout<<"\t\t\t\t================================"<<endl;
+			cout<<"\t\t\t\t||     应收： "<<sum<<"元  \t||"<<endl;
+			cout<<"\t\t\t\t||     实收："<<money2<<"元\t\t||"<<endl;
+			cout<<"\t\t\t\t||     找零："<<money2-sum<<"元\t\t||"<<endl;
+			cout<<"\t\t\t\t================================"<<endl<<endl;
+			consumeRecord2(sum,sum,money2,money2-sum);
+
+			system("pause");
+			system("cls");
+			if(sum>200){
+				cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+				cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+				cout<<"\t\t*\t\t       是否加入会员？     \t\t\t*"<<endl;
+				cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+				cout<<"\t\t*****************************************************************"<<endl;    
+				do{
+					cin>>g;
+					getchar();
+					if(W.judge(g)==1)
+						addVIP();
+				}while(W.judge(g)<0);
+			}
+		}
+		else
+			goto CING;
+}
+//会员充值
+void Customer::VIPrecharge(){
+	int cardword;
+	double money=-10;//初始为-10
+	system("cls");
+	cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t    请输入会员卡号：      \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*****************************************************************"<<endl;
+	int f;
+	do{
+		cin>>cardword;
+		f=VIPinquiry(cardword);
+	}while(!f);
+	cout<<endl<<"请输入充值金额：";
+	while(money<=0){
+		cin>>money;
+		if(money<=0)
+			cout<<"输入金额错误，请重新出入：";
+	}
+	VIPwrite(f-1,money);
+	cout<<"充值成功！"<<endl;
+	cout<<"\t\t\t卡号\t姓名\t性别\t电话\t余额"<<endl;
+	cout<<"\t\t    ==============================================="<<endl;
+	cout<<"\t\t\t"<<id[f-1]<<"\t"<<name[f-1]<<"\t"<<sex[f-1]<<"\t"<<phonenumber[f-1]<<"\t"<<balance[f-1]<<endl;
+	cout<<"按任意键返回主菜单！"<<endl;
+	system("pause");
+}
+
+
+
+//员工类
+class Employee:public VIP_common,public Commodity{//员工类
+private:
+	Wrond W;
+public:
+	Employee(){
+		Commodityfile();
+	}
+	void show(){
+		system("cls");
+		cout<<"请按提示操作：";
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      1.查看库存          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      2.查找商品          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      3.入库操作          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      4.更改价格          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      5.查看会员信息      \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      6.退出界面          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;            
+	}
+	void choose2(){
+		system("cls");
+		cout<<"请按提示操作：";
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t     1.按货品编号查询     \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t     2.按货品名称查询     \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;       
+		char in;
+		do{	
+			cin>>in;
+			switch(in){
+			case '1':
+				system("cls");
+				seekgoods1();
+				system("pause");
+				break;
+			case '2':
+				system("cls");
+				seekgoods2();
+				system("pause");
+				break;
+			default:
+				cout<<"输入错误！请从新输入：";	
+			break;
+			}
+		}while(in>'2' || in<'1');
+	}
+	void seekgoods1();
+	void seekgoods2();
+	void putinstorage();
+	void changeprice();
+	void seekVIP();
+	void choose(){
+		char in;
+		int cid;
+		do{	
+			cin>>in;
+			switch(in){
+			case '1':
+				system("cls");
+				Commodityinformation();
+				system("pause");
+				break;
+			case '2':
+				choose2();
+				break;
+			case '3':
+				putinstorage();
+				break;
+			case '4':
+				changeprice();
+				break;
+			case '5':
+				system("cls");
+				VIPinformation();
+				system("pause");
+				break;
+			case '6':
+				break;
+			default:
+				cout<<"输入错误！请从新输入：";	
+			break;
+			}
+		}while(in>'6' || in<'1');
+	}
+};
+//货品查询按编号
+void Employee::seekgoods1(){
+	int goodsid;
+	int f;
+	char g;
+	do{
+		system("cls");
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t  请输入查询货品编号:     \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;    
+		cin>>goodsid;
+		f=Commodityquiry(goodsid);
+		if(f!=0){
+			cout<<"查询成功！"<<endl;
+			cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+			cout<<"\t\t    ========================================================"<<endl;
+			cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+		}
+		else
+			cout<<"未查询到该货品！请确认是否输入正确！"<<endl;
+		cout<<"是否继续？：";
+		do{
+			cin>>g;
+			getchar();
+			if(g!='y' && g!='Y' && g!='N' && g!='n')
+				cout<<"输入错误请重新输入：";
+		}while(g!='y' && g!='Y' && g!='N' && g!='n');
+	}while(g!='N' && g!='n');
+}
+
+void Employee::seekgoods2(){
+	string goodsid;
+	int f;
+	char g;
+	do{
+		system("cls");
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t  请输入查询货品名称:     \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;    
+		cin>>goodsid;
+		f=Commodityquiryname(goodsid);
+		if(f!=0){
+			cout<<"查询成功！"<<endl;
+			cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+			cout<<"\t\t    ========================================================"<<endl;
+			cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+		}
+		else
+			cout<<"未查询到该货品！请确认是否输入正确！"<<endl;
+		cout<<"是否继续？：";
+		do{
+			cin>>g;
+			getchar();
+			if(g!='y' && g!='Y' && g!='N' && g!='n')
+				cout<<"输入错误请重新输入：";
+		}while(g!='y' && g!='Y' && g!='N' && g!='n');
+	}while(g!='N' && g!='n');
+}
+
+//货品入库
+void Employee::putinstorage(){
+	char g;
+	system("cls");
+	cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t      是否是新品货物？    \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*****************************************************************"<<endl;    
+	do{
+		cin>>g;
+		getchar();
+		if(W.judge(g)==1){
+			int id,num;
+			char name[20];
+			double pri;
+			cout<<"请输入新增货品名称：";
+			cin>>name;
+			cout<<"请输入新增货品价格：";
+			do{
+				cin>>pri;
+				if(pri<0)
+					cout<<"新增货品价格输入错误！请重新输入：";
+			}while(pri<0);
+			cout<<"请输入新增货品数量：";
+			do{
+				cin>>num;
+				if(num<0)
+					cout<<"新增货品数量输入错误！请重新输入：";
+			}while(num<0);
+			ofstream of("Commodity.txt",ios::app);
+			of<<"\n"<<mn+1<<" "<<name<<" "<<pri<<" "<<num;		//id要改成10000+m；
+			system("cls");
+			cout<<"入库成功！";
+			of.close();
+		}
+		else if(W.judge(g)==0){
+			cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+			cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+			cout<<"\t\t*\t\t     请输入入库货品编号:  \t\t\t*"<<endl;
+			cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+			cout<<"\t\t*****************************************************************"<<endl;   
+			int goodsID;
+			int shuliang=-1;
+			int f;
+			do{
+				cin>>goodsID;
+				f=Commodityquiry(goodsID);
+			}while(!f);
+			cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+			cout<<"\t\t    ========================================================"<<endl;
+			cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+			cout<<endl<<"请输入入库数量：";
+			while(shuliang<=0){
+				cin>>shuliang;
+				if(shuliang<0)
+				cout<<"输入数量错误，请重新出入：";
+			}
+			stock[f-1]+=shuliang;
+			Commoditywrite();
+			cout<<"入库成功！"<<endl;
+			cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+			cout<<"\t\t    ========================================================"<<endl;
+			cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+			cout<<"按任意键返回主菜单！"<<endl;
+			system("pause");
+		}
+	}while(W.judge(g)<0);
+}
+//货品价格更改
+void Employee::changeprice(){
+	system("cls");
+	cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*\t\t   请输入更改价格货品编号:\t\t\t*"<<endl;
+	cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+	cout<<"\t\t*****************************************************************"<<endl;    
+	int goodsID;
+	double pric=-1;
+	int f;
+	do{
+		cin>>goodsID;
+		f=Commodityquiry(goodsID);
+	}while(!f);
+	cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+	cout<<"\t\t    ========================================================"<<endl;
+	cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+	cout<<endl<<"请输入更改价格：";
+	while(pric<=0){
+		cin>>pric;
+		if(pric<=0)
+			cout<<"输入价钱错误，请重新出入：";
+	}
+	price[f-1]=pric;
+	Commoditywrite();
+	cout<<"更改成功！"<<endl;
+	cout<<"\t\t\t货品ID\t货品名称\t货品价格\t货品存量"<<endl;
+	cout<<"\t\t    ========================================================"<<endl;
+	cout<<"\t\t\t"<<commodityID[f-1]<<"\t"<<commodityname[f-1]<<"\t\t"<<price[f-1]<<"\t\t"<<stock[f-1]<<endl;
+	cout<<"按任意键返回主菜单！"<<endl;
+	system("pause");
+}
+
+//密码输入
+class Password{
+private:
+	int ID[100],Number[100];
+	string Name[100],Sex[100];
+	char PassWord[100][20];
+	int id;				//员工Id
+	string password;	//密码
+	int n;
+public:
+	void show1(){                      //员工证号输入
+		ifstream fin("EmpId.txt",ios::in);
+		if(!fin){
+			cout<<"error!文件打开错误！";
+			exit(-1);
+		}
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t       请输员工证号：     \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+		int m=0;
+		while(!fin.eof()){
+			fin>>ID[m]>>Name[m]>>Sex[m]>>Number[m]>>PassWord[m];
+			m++;
+		}
+		do{
+			cin>>id;
+			n=0;
+			while(n<m){
+				if(ID[n]==id)
+					return;
+				n++;
+			}
+			cout<<"未查询到！请确认是否输入正确并从新输入：";
+		}while(1);
+	}
+
+	int show2(){				//密码输入
+		int i=0,j;
+		char ps[]={"123"};
+		char t[100];
+		system("cls");
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t        请输入密码：      \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+		j=0;
+		t[0]='\0';
+		t[j]=getch();
+		while(t[j]!=13 && j<100){
+			cout<<"*";
+			j++;
+			t[j]=getch();
+		}
+		t[j]='\0';
+		i=0;
+		int num=5;
+		while(i<4){
+			if(!strcmp(t,PassWord[n])){
+				system("cls");
+				cout<<"密码正确！请选择："<<endl;
+				cout<<"\t\t\t员工号\t姓名\t性别\t电话\t密码"<<endl;
+				cout<<"\t\t    ==============================================="<<endl;
+				cout<<"\t\t\t"<<ID[n]<<"\t"<<Name[n]<<"\t"<<Sex[n]<<"\t"<<Number[n]<<"\t"<<PassWord[n]<<endl;
+				system("pause");
+				return 1;
+			}
+			else {
+				num--;
+				system("cls");
+				cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+				cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+				cout<<"\t\t*\t\t密码错误！请从新输入密码：\t\t\t*"<<endl;
+				cout<<"\t\t*\t\t   您还有"<<num<<"次机会   \t\t\t\t*"<<endl;
+				cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+				cout<<"\t\t*****************************************************************"<<endl;
+				j=0;
+				t[j]='\0';
+				t[j]=getch();
+				while(t[j]!=13 && j<100){
+					cout<<"*";
+					j++;
+					t[j]=getch();
+				}
+				t[j]='\0';
+			}
+			i++;
+		}
+		system("cls");
+		cout<<endl<<endl<<"\t\t*****************************************************************"<<endl;
+		cout<<"\t\t*\t\t                          \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t    密码输入错误超过5次   \t\t\t*"<<endl;
+		cout<<"\t\t*\t\t      系统自动退出！      \t\t\t*"<<endl;
+		cout<<"\t\t*****************************************************************"<<endl;
+		return 0;
+	}
+};
+
+
+
+
+void main(){
+	char in,g;
+	Starshow star;					//开始界面类
+	Wrond W;						//出错检查类
+	Password P;						//输入密码类
+STAR:star.show();
+	cin>>g;
+	if(W.judge(g)==1){				//输入的是y/Y；
+		P.show1();					//输入员工证号
+		if(P.show2()==0)			//输入密码
+			return;
+	}
+	else if(W.judge(g)==0){			//输入的是n/N
+		star.close();
+		return;
+	}
+	else {							//其他输入返回开始界面
+		goto STAR;
+	}
+	Customer Cus;					//建立顾客对象
+	Employee Emp;					//建立员工对象
+	//LIST:system("cls");
+LIST:star.list();					 //打印菜单
+	IN:cin>>in;
+	switch(in){
+	case '1':
+		Cus.show();
+		Cus.choose();
+		goto LIST;
+		break;
+	case '2':
+		Emp.show();
+		Emp.choose();
+		goto LIST;
+		break;
+	case '3':
+		star.close();
+		break;
+	default:
+		cout<<"输入错误！，请从新输入：";
+		goto IN;
+	}
+	return;
+}
